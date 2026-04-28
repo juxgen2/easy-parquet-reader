@@ -57,7 +57,9 @@ def load_dataframe(file_storage) -> pd.DataFrame:
     if name_lower.endswith(".feather"):
         return pd.read_feather(buf)
     if name_lower.endswith(".pkl"):
-        return pd.read_pickle(buf)
+        # Pickle deserialization is only safe with files you personally created.
+        # This app is local-only; do not open .pkl files from untrusted sources.
+        return pd.read_pickle(buf)  # noqa: S301
     raise ValueError(f"Unsupported file extension: {filename!r}")
 
 
@@ -247,6 +249,7 @@ def dataset(dataset_id: str):
         filename=filename,
         all_columns=list(df.columns),
         visible_cols=visible_cols,
+        visible_cols_set=set(visible_cols),
         col_meta=col_meta,
         filters=filters,
         rows=rows,
@@ -326,4 +329,4 @@ def number_format_filter(value):
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=False)

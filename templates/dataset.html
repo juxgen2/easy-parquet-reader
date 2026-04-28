@@ -38,7 +38,7 @@
           {% for col in all_columns %}
           <label class="col-item">
             <input type="checkbox" name="cols" value="{{ col | e }}"
-                   {% if col in visible_cols %}checked{% endif %} />
+            {% if col in visible_cols_set %}checked{% endif %} />
             <span>{{ col | e }}</span>
           </label>
           {% endfor %}
