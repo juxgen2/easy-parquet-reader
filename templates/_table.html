@@ -1,0 +1,131 @@
+{# Table partial – rendered both on full page load and via HTMX #}
+<div class="table-controls">
+  <div class="pagination-info">
+    Showing rows {{ ((page - 1) * page_size + 1) | number_format }}–{{ [page * page_size, filtered_rows] | min | number_format }}
+    of {{ filtered_rows | number_format }}
+    {% if filtered_rows != total_rows %}(filtered from {{ total_rows | number_format }}){% endif %}
+  </div>
+  <div class="page-size-control">
+    Rows per page:
+    <select onchange="changePageSize(this.value)">
+      {% for ps in [25, 50, 100, 250, 500, 1000] %}
+      <option value="{{ ps }}" {% if ps == page_size %}selected{% endif %}>{{ ps }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+<div class="table-wrapper">
+  {% if rows %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th class="row-num">#</th>
+        {% for col in page_columns %}
+        <th>{{ col | e }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td class="row-num">{{ ((page - 1) * page_size + loop.index) | number_format }}</td>
+        {% for cell in row %}
+        <td>{{ cell | e }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">No rows match the current filters.</div>
+  {% endif %}
+</div>
+
+{# Pagination controls #}
+{% if total_pages > 1 %}
+<div class="pagination">
+
+  {# Build base query string without page param #}
+  {% set base_params = [] %}
+  {% for col in visible_cols %}
+  {% set _ = base_params.append('cols=' ~ col | urlencode) %}
+  {% endfor %}
+  {% for col, val in filters.items() %}
+  {% set _ = base_params.append('filter_' ~ col | urlencode ~ '=' ~ val | urlencode) %}
+  {% endfor %}
+  {% set _ = base_params.append('page_size=' ~ page_size) %}
+  {% set base_qs = base_params | join('&') %}
+
+  {% macro page_url(p) %}{{ url_for('table_partial', dataset_id=dataset_id) }}?{{ base_qs }}&page={{ p }}{% endmacro %}
+
+  <button class="btn btn-pg"
+          {% if page <= 1 %}disabled{% endif %}
+          hx-get="{{ page_url(1) }}"
+          hx-target="#table-area"
+          hx-swap="innerHTML">«</button>
+
+  <button class="btn btn-pg"
+          {% if page <= 1 %}disabled{% endif %}
+          hx-get="{{ page_url(page - 1) }}"
+          hx-target="#table-area"
+          hx-swap="innerHTML">‹</button>
+
+  {# Show nearby pages #}
+  {% set start_p = [1, page - 2] | max %}
+  {% set end_p   = [total_pages, page + 2] | min %}
+
+  {% if start_p > 1 %}
+  <button class="btn btn-pg" hx-get="{{ page_url(1) }}" hx-target="#table-area" hx-swap="innerHTML">1</button>
+  {% if start_p > 2 %}<span class="pg-ellipsis">…</span>{% endif %}
+  {% endif %}
+
+  {% for p in range(start_p, end_p + 1) %}
+  <button class="btn btn-pg {% if p == page %}active{% endif %}"
+          hx-get="{{ page_url(p) }}"
+          hx-target="#table-area"
+          hx-swap="innerHTML">{{ p }}</button>
+  {% endfor %}
+
+  {% if end_p < total_pages %}
+  {% if end_p < total_pages - 1 %}<span class="pg-ellipsis">…</span>{% endif %}
+  <button class="btn btn-pg" hx-get="{{ page_url(total_pages) }}" hx-target="#table-area" hx-swap="innerHTML">{{ total_pages }}</button>
+  {% endif %}
+
+  <button class="btn btn-pg"
+          {% if page >= total_pages %}disabled{% endif %}
+          hx-get="{{ page_url(page + 1) }}"
+          hx-target="#table-area"
+          hx-swap="innerHTML">›</button>
+
+  <button class="btn btn-pg"
+          {% if page >= total_pages %}disabled{% endif %}
+          hx-get="{{ page_url(total_pages) }}"
+          hx-target="#table-area"
+          hx-swap="innerHTML">»</button>
+
+</div>
+{% endif %}
+
+<script>
+  function changePageSize(size) {
+    const form = document.getElementById('filter-form');
+    const hidden = document.getElementById('page-size-hidden');
+    if (hidden) hidden.value = size;
+
+    // Collect cols
+    const cols = Array.from(document.querySelectorAll('#cols-panel input[type=checkbox]:checked')).map(c => c.value);
+
+    const params = new URLSearchParams(new FormData(form));
+    params.set('page', '1');
+    params.set('page_size', size);
+    // Replace cols
+    params.delete('cols');
+    cols.forEach(c => params.append('cols', c));
+
+    htmx.ajax('GET', '{{ url_for("table_partial", dataset_id=dataset_id) }}?' + params.toString(), {
+      target: '#table-area',
+      swap: 'innerHTML'
+    });
+  }
+</script>

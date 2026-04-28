@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}{{ filename }} – Easy Parquet Reader{% endblock %}
+
+{% block content %}
+<div class="dataset-page">
+
+  {# ── Metadata card ── #}
+  <div class="meta-card">
+    <span class="meta-filename">📄 {{ filename }}</span>
+    <span class="meta-pill">{{ total_df_rows | number_format }} rows</span>
+    <span class="meta-pill">{{ total_df_cols }} columns</span>
+    {% if filtered_rows != total_df_rows %}
+    <span class="meta-pill meta-filtered">{{ filtered_rows | number_format }} matching</span>
+    {% endif %}
+    <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline meta-new">Upload new file</a>
+  </div>
+
+  <div class="workspace">
+
+    {# ── Sidebar ── #}
+    <aside class="sidebar">
+
+      {# Column visibility #}
+      <details class="panel" open>
+        <summary class="panel-title">Columns</summary>
+        <div class="panel-body"
+             id="cols-panel"
+             hx-get="{{ url_for('table_partial', dataset_id=dataset_id) }}"
+             hx-trigger="change"
+             hx-target="#table-area"
+             hx-include="#filter-form, #cols-panel input[type=checkbox]"
+             hx-swap="innerHTML">
+          <div class="col-buttons">
+            <button type="button" class="btn btn-xs" onclick="setAllCols(true)">All</button>
+            <button type="button" class="btn btn-xs" onclick="setAllCols(false)">None</button>
+            <button type="button" class="btn btn-xs" onclick="resetCols()">Reset</button>
+          </div>
+          {% for col in all_columns %}
+          <label class="col-item">
+            <input type="checkbox" name="cols" value="{{ col | e }}"
+                   {% if col in visible_cols %}checked{% endif %} />
+            <span>{{ col | e }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </details>
+
+      {# Filters #}
+      <details class="panel" open>
+        <summary class="panel-title">Filters</summary>
+        <div class="panel-body">
+          <form id="filter-form"
+                hx-get="{{ url_for('table_partial', dataset_id=dataset_id) }}"
+                hx-trigger="input delay:400ms, change"
+                hx-target="#table-area"
+                hx-include="#filter-form, #cols-panel input[type=checkbox]"
+                hx-swap="innerHTML">
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="page_size" id="page-size-hidden" value="{{ page_size }}" />
+
+            {% for col in all_columns %}
+            {% set meta = col_meta[col] %}
+            <div class="filter-item">
+              <label class="filter-label" title="{{ col | e }}">{{ col | e }}</label>
+              {% if meta.type == 'select' %}
+              <select name="filter_{{ col | e }}" class="filter-input">
+                <option value="">— any —</option>
+                {% for opt in meta.options %}
+                <option value="{{ opt | e }}" {% if filters.get(col) == opt %}selected{% endif %}>{{ opt | e }}</option>
+                {% endfor %}
+              </select>
+              {% elif meta.type == 'number' %}
+              <input type="text" name="filter_{{ col | e }}" class="filter-input"
+                     placeholder="e.g. >10 or =5"
+                     value="{{ filters.get(col, '') | e }}" />
+              {% elif meta.type == 'date' %}
+              <input type="text" name="filter_{{ col | e }}" class="filter-input"
+                     placeholder="partial date string"
+                     value="{{ filters.get(col, '') | e }}" />
+              {% else %}
+              <input type="text" name="filter_{{ col | e }}" class="filter-input"
+                     placeholder="contains…"
+                     value="{{ filters.get(col, '') | e }}" />
+              {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="button" class="btn btn-xs btn-outline" onclick="clearFilters()">Clear filters</button>
+          </form>
+        </div>
+      </details>
+
+    </aside>
+
+    {# ── Main table area ── #}
+    <div class="main-area">
+      <div id="table-area">
+        {% include "_table.html" %}
+      </div>
+    </div>
+
+  </div>{# /workspace #}
+</div>
+
+<script>
+  function setAllCols(checked) {
+    document.querySelectorAll('#cols-panel input[type=checkbox]').forEach(cb => cb.checked = checked);
+    htmx.trigger('#cols-panel', 'change');
+  }
+
+  function resetCols() {
+    document.querySelectorAll('#cols-panel input[type=checkbox]').forEach(cb => cb.checked = true);
+    htmx.trigger('#cols-panel', 'change');
+  }
+
+  function clearFilters() {
+    document.querySelectorAll('#filter-form input[type=text], #filter-form input[type=number]').forEach(el => el.value = '');
+    document.querySelectorAll('#filter-form select').forEach(el => el.selectedIndex = 0);
+    htmx.trigger('#filter-form', 'change');
+  }
+
+  // Intercept pagination buttons to also include cols panel state
+  document.body.addEventListener('htmx:configRequest', function(evt) {
+    if (evt.detail.elt.dataset.includesCols) {
+      document.querySelectorAll('#cols-panel input[type=checkbox]:checked').forEach(cb => {
+        evt.detail.parameters['cols'] = (evt.detail.parameters['cols'] || []);
+        if (!Array.isArray(evt.detail.parameters['cols'])) {
+          evt.detail.parameters['cols'] = [evt.detail.parameters['cols']];
+        }
+        evt.detail.parameters['cols'].push(cb.value);
+      });
+    }
+  });
+</script>
+{% endblock %}
