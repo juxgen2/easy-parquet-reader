@@ -35,7 +35,7 @@ Then open **http://127.0.0.1:5000** in your browser.
 - **Drag-and-drop** upload – files are never saved to disk.
 - **Column visibility** – show/hide individual columns instantly.
 - **Per-column filters** – dropdowns for low-cardinality columns, text/number search for the rest.
-- **Pagination** – choose 25 / 50 / 100 / 250 / 500 / 1 000 rows per page.
+- **Pagination** – choose 25 / 50 / 100 / 250 / 500 / 1,000 rows per page.
 - **HTMX** partial updates – no full page reloads for filters, columns, or pagination.
 
 ## Upload size limit
@@ -51,6 +51,10 @@ app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # bytes
 This app is designed for **local use only**. It has no authentication, no database,
 and no cloud connectivity. Uploaded files are kept in memory only for the duration
 of the session and are never written to disk.
+
+> ⚠️ **Security note for `.pkl` files**: Python pickle files can execute arbitrary
+> code when deserialized. Only open `.pkl` files that **you** created or fully trust.
+> Never open a `.pkl` file received from an untrusted source.
 
 ## HTMX note
 

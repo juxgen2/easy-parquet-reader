@@ -149,7 +149,7 @@ def safe_values(df: pd.DataFrame) -> list[list[str]]:
     for _, row in df.iterrows():
         cells = []
         for val in row:
-            if pd.isna(val) if not isinstance(val, (list, dict)) else False:
+            if not isinstance(val, (list, dict)) and pd.isna(val):
                 cells.append("")
             else:
                 cells.append(str(val))
