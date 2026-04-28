@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Upload a File – Easy Parquet Reader{% endblock %}
+
+{% block content %}
+<div class="upload-page">
+  <div class="upload-card">
+    <h1>Upload a tabular file</h1>
+    <p class="subtitle">Supports Parquet, CSV, Excel, JSON, JSONL, Feather, Pickle&nbsp;• max 200&nbsp;MB</p>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form id="upload-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-inner">
+          <span class="dropzone-icon">⬆️</span>
+          <p class="dropzone-text">Drag &amp; drop your file here</p>
+          <p class="dropzone-sub">or</p>
+          <label class="btn btn-primary" for="file-input">Browse file…</label>
+          <input id="file-input" type="file" name="file" class="file-input-hidden"
+                 accept=".parquet,.csv,.xlsx,.xls,.json,.jsonl,.feather,.pkl"
+                 onchange="handleFileSelect(this)" />
+        </div>
+        <p id="selected-file" class="selected-file-name"></p>
+      </div>
+      <button type="submit" class="btn btn-submit" id="submit-btn" disabled>Load file</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('file-input');
+  const submitBtn = document.getElementById('submit-btn');
+  const selectedFile = document.getElementById('selected-file');
+
+  function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+      selectedFile.textContent = input.files[0].name;
+      submitBtn.disabled = false;
+    }
+  }
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('drag-over');
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('drag-over');
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      fileInput.files = files;
+      handleFileSelect(fileInput);
+    }
+  });
+</script>
+{% endblock %}
