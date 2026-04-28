@@ -24,6 +24,7 @@ Then open **http://127.0.0.1:5000** in your browser.
 |-----------|-------|
 | `.parquet` | via `pyarrow` |
 | `.csv` | auto-detects common encodings |
+| `.csv.gz` | gzip-compressed CSV, auto-detects encoding |
 | `.xlsx` / `.xls` | via `openpyxl` / `xlrd` |
 | `.json` | standard JSON (array or records) |
 | `.jsonl` | JSON Lines |
@@ -33,7 +34,7 @@ Then open **http://127.0.0.1:5000** in your browser.
 ## Features
 
 - **Drag-and-drop** upload – files are never saved to disk.
-- **Column visibility** – show/hide individual columns instantly.
+- **Column visibility** – show/hide individual columns instantly; search box to quickly find columns by name.
 - **Per-column filters** – dropdowns for low-cardinality columns, text/number search for the rest.
 - **Pagination** – choose 25 / 50 / 100 / 250 / 500 / 1,000 rows per page.
 - **HTMX** partial updates – no full page reloads for filters, columns, or pagination.

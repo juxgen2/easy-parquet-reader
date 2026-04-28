@@ -5,7 +5,7 @@
 <div class="upload-page">
   <div class="upload-card">
     <h1>Upload a tabular file</h1>
-    <p class="subtitle">Supports Parquet, CSV, Excel, JSON, JSONL, Feather, Pickle&nbsp;• max 200&nbsp;MB</p>
+    <p class="subtitle">Supports Parquet, CSV, csv.gz, Excel, JSON, JSONL, Feather, Pickle&nbsp;• max 200&nbsp;MB</p>
 
     {% if error %}
     <div class="alert alert-error">{{ error }}</div>
@@ -19,7 +19,7 @@
           <p class="dropzone-sub">or</p>
           <label class="btn btn-primary" for="file-input">Browse file…</label>
           <input id="file-input" type="file" name="file" class="file-input-hidden"
-                 accept=".parquet,.csv,.xlsx,.xls,.json,.jsonl,.feather,.pkl"
+                 accept=".parquet,.csv,.csv.gz,.xlsx,.xls,.json,.jsonl,.feather,.pkl"
                  onchange="handleFileSelect(this)" />
         </div>
         <p id="selected-file" class="selected-file-name"></p>

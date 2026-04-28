@@ -30,6 +30,8 @@
              hx-target="#table-area"
              hx-include="#filter-form, #cols-panel input[type=checkbox]"
              hx-swap="innerHTML">
+          <input type="text" id="col-search" class="col-search-input" placeholder="Search columns…"
+                 oninput="filterColItems(this.value)" autocomplete="off" />
           <div class="col-buttons">
             <button type="button" class="btn btn-xs" onclick="setAllCols(true)">All</button>
             <button type="button" class="btn btn-xs" onclick="setAllCols(false)">None</button>
@@ -39,7 +41,7 @@
           <label class="col-item">
             <input type="checkbox" name="cols" value="{{ col | e }}"
             {% if col in visible_cols_set %}checked{% endif %} />
-            <span>{{ col | e }}</span>
+            <span title="{{ col | e }}">{{ col | e }}</span>
           </label>
           {% endfor %}
         </div>
@@ -111,6 +113,16 @@
   function resetCols() {
     document.querySelectorAll('#cols-panel input[type=checkbox]').forEach(cb => cb.checked = true);
     htmx.trigger('#cols-panel', 'change');
+  }
+
+  function filterColItems(query) {
+    const q = query.toLowerCase();
+    document.querySelectorAll('#cols-panel .col-item').forEach(item => {
+      const name = item.querySelector('span').textContent.toLowerCase();
+      const hidden = !name.includes(q);
+      item.style.display = hidden ? 'none' : '';
+      item.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+    });
   }
 
   function clearFilters() {
