@@ -20,7 +20,7 @@ app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB
 # In-memory store: dataset_id -> {"df": pd.DataFrame, "filename": str}
 _STORE: dict[str, dict[str, Any]] = {}
 
-ACCEPTED_EXTENSIONS = {".parquet", ".csv", ".xlsx", ".xls", ".json", ".jsonl", ".feather", ".pkl"}
+ACCEPTED_EXTENSIONS = {".parquet", ".csv", ".csv.gz", ".xlsx", ".xls", ".json", ".jsonl", ".feather", ".pkl"}
 
 # ---------------------------------------------------------------------------
 # Data loading helpers
@@ -37,6 +37,15 @@ def load_dataframe(file_storage) -> pd.DataFrame:
 
     if name_lower.endswith(".parquet"):
         return pd.read_parquet(buf, engine="pyarrow")
+    if name_lower.endswith(".csv.gz"):
+        for enc in ("utf-8", "utf-8-sig", "latin-1", "cp1252"):
+            try:
+                buf.seek(0)
+                return pd.read_csv(buf, encoding=enc, compression="gzip", low_memory=False)
+            except UnicodeDecodeError:
+                continue
+        buf.seek(0)
+        return pd.read_csv(buf, encoding="latin-1", compression="gzip", low_memory=False)
     if name_lower.endswith(".csv"):
         for enc in ("utf-8", "utf-8-sig", "latin-1", "cp1252"):
             try:
@@ -174,7 +183,12 @@ def upload():
         return render_template("index.html", error="No file selected.")
 
     filename: str = file.filename or ""
-    ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    name_lower = filename.lower()
+    # Handle double extensions like .csv.gz before falling back to single extension
+    if name_lower.endswith(".csv.gz"):
+        ext = ".csv.gz"
+    else:
+        ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if ext not in ACCEPTED_EXTENSIONS:
         return render_template("index.html", error=f"Unsupported file type '{ext}'. Accepted: {', '.join(sorted(ACCEPTED_EXTENSIONS))}")
 

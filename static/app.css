@@ -252,9 +252,24 @@ details[open] > .panel-title::before { content: "▾ "; }
 /* ── Column panel ── */
 .col-buttons { display: flex; gap: 4px; margin-bottom: 8px; }
 
+.col-search-input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+  margin-bottom: 8px;
+}
+
+.col-search-input:focus { border-color: var(--primary); background: var(--surface); }
+
 .col-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   padding: 3px 2px;
   font-size: 12px;
@@ -263,8 +278,8 @@ details[open] > .panel-title::before { content: "▾ "; }
 }
 
 .col-item:hover { background: var(--bg); }
-.col-item input { flex-shrink: 0; }
-.col-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-item input { flex-shrink: 0; margin-top: 2px; }
+.col-item span { word-break: break-word; }
 
 /* ── Filter panel ── */
 .filter-item { margin-bottom: 8px; }
